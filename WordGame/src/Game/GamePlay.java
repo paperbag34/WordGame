@@ -1,35 +1,34 @@
 package Game;
+
 import java.util.Scanner;
 
 public class GamePlay {
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter your first name: ");
-        String firstName = scanner.nextLine();
+	public static void main(String[] args) {
+		Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Do you want to enter a last name? (yes/no): ");
-        String choice = scanner.nextLine();
-        Person player;
+		System.out.print("Enter the host's name: ");
+		String hostName = scanner.nextLine();
+		Hosts host = new Hosts(hostName);
+		host.randomizeNum();
 
-        if (choice.equalsIgnoreCase("yes")) {
-            System.out.print("Enter your last name: ");
-            String lastName = scanner.nextLine();
-            player = new Person(firstName, lastName);
-        } else {
-            player = new Person(firstName);
-        }
+		System.out.print("Enter your name: ");
+		String playerName = scanner.nextLine();
+		Players player = new Players(playerName);
 
-        Numbers numberGame = new Numbers();
-        numberGame.generateNumber();
+		Turn turn = new Turn();
 
-        while (true) {
-            System.out.print(player.getFirstName() + ", guess the number (0-100): ");
-            int guess = scanner.nextInt();
-            if (numberGame.compareNumber(guess)) {
-                break;
-            }
-        }
+		boolean keepPlaying = true;
 
-        scanner.close();
-    }
+		while (keepPlaying) {
+			// Keep taking turns until the player guesses correctly
+			turn.takeTurn(player, host);
+			System.out.print("Do you want to keep playing? (yes/no): ");
+			String keepPlayingChoice = scanner.nextLine();
+			if (keepPlayingChoice.equalsIgnoreCase("no")) {
+				host.randomizeNum(); // Change the random number for the next game
+				keepPlaying = false;
+			}
+
+		}
+	}
 }

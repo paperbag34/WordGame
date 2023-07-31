@@ -2,7 +2,7 @@ package Game;
 
 import java.util.Random;
 public class Numbers {
-    private int randomNum;
+    static int randomNum;
 
     // Public getter and setter for randomNum field
     public int getRandomNum() {
