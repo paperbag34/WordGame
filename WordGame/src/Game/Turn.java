@@ -35,14 +35,3 @@ public class Turn {
         }
    	}
 }
-
-//Numbers numberGame = new Numbers();
-//numberGame.generateNumber();
-//
-//while (true) {
-//    System.out.print(player.getFirstName() + ", guess the number (0-100): ");
-//    int guess = scanner.nextInt();
-//    if (numberGame.compareNumber(guess)) {
-//        break;
-//    }
-//}

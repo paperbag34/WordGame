@@ -6,11 +6,13 @@ public class GamePlay {
 	public static void main(String[] args) {
 		Scanner scanner = new Scanner(System.in);
 
+		//gather hosts name
 		System.out.print("Enter the host's name: ");
 		String hostName = scanner.nextLine();
 		Hosts host = new Hosts(hostName);
 		host.randomizeNum();
 
+		//gather players name
 		System.out.print("Enter your name: ");
 		String playerName = scanner.nextLine();
 		Players player = new Players(playerName);
@@ -19,6 +21,7 @@ public class GamePlay {
 
 		boolean keepPlaying = true;
 
+		//loops while player wants to keep playing.
 		while (keepPlaying) {
 			// Keep taking turns until the player guesses correctly
 			turn.takeTurn(player, host);
