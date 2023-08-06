@@ -3,35 +3,40 @@ package Game;
 import java.util.Scanner;
 
 public class GamePlay {
-	public static void main(String[] args) {
-		Scanner scanner = new Scanner(System.in);
+    public static void main(String[] args) {
+    	
+    	Numbers num = new Numbers();
+    	
+        Scanner scanner = new Scanner(System.in);
 
-		//gather hosts name
-		System.out.print("Enter the host's name: ");
-		String hostName = scanner.nextLine();
-		Hosts host = new Hosts(hostName);
-		host.randomizeNum();
+        Players[] currentPlayers = new Players[3];
 
-		//gather players name
-		System.out.print("Enter your name: ");
-		String playerName = scanner.nextLine();
-		Players player = new Players(playerName);
+        for (int i = 0; i < currentPlayers.length; i++) {
+            System.out.print("Enter player " + (i + 1) + "'s name: ");
+            String playerName = scanner.nextLine();
+            currentPlayers[i] = new Players(playerName);
+        }
 
-		Turn turn = new Turn();
+        //get number for game.
+        num.generateNumber();
 
-		boolean keepPlaying = true;
+        
+        Hosts host = new Hosts("Game Host");
+        Turn turn = new Turn();
 
-		//loops while player wants to keep playing.
-		while (keepPlaying) {
-			// Keep taking turns until the player guesses correctly
-			turn.takeTurn(player, host);
-			System.out.print("Do you want to keep playing? (yes/no): ");
-			String keepPlayingChoice = scanner.nextLine();
-			if (keepPlayingChoice.equalsIgnoreCase("no")) {
-				host.randomizeNum(); // Change the random number for the next game
-				keepPlaying = false;
-			}
+        boolean keepPlaying = true;
 
-		}
-	}
+        while (keepPlaying) {
+            for (Players currentPlayer : currentPlayers) {
+                turn.takeTurn(currentPlayer, host, new Money()); // Use Money class for award
+                //System.out.println("Gameplay" + num.randomNum);
+                System.out.print("Do you want to keep playing? (yes/no): ");
+                String keepPlayingChoice = scanner.nextLine();
+                if (keepPlayingChoice.equalsIgnoreCase("no")) {
+                	host.randomizeNum();
+                    keepPlaying = false;
+                }
+            }
+        }
+    }
 }

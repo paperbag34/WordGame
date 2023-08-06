@@ -1,7 +1,7 @@
 package Game;
 
 public class Players extends Person {
-    private int money;
+    private long money;
 
     public Players(String firstName) {
         super(firstName);
@@ -9,11 +9,11 @@ public class Players extends Person {
     }
 
     // Getter and setter for money
-    public int getMoney() {
+    public long getMoney() {
         return money;
     }
 
-    public void setMoney(int money) {
+    public void setMoney(long money) {
         this.money = money;
     }
 
