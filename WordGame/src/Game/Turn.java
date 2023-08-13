@@ -1,38 +1,29 @@
 package Game;
 
-import java.util.Random;
 import java.util.Scanner;
 
 public class Turn {
-    public void takeTurn(Players player, Hosts host, Award award) {
-        Numbers numbers = new Numbers();
-        boolean keepPlaying = true;
-
+    public void takeTurn(Players player, Hosts host) {
         Scanner scanner = new Scanner(System.in);
 
+        boolean keepPlaying = true;
+
         while (keepPlaying) {
-        	//System.out.println("Turn" + numbers.randomNum);
-            System.out.print(host.getFirstName() + " says: " + player.getFirstName() + ", guess the number (0-100): ");
+            System.out.println("Host says: " + Phrases.getPlayingPhrase());
 
-            int guess = scanner.nextInt();
-            boolean isCorrectGuess = numbers.compareNumber(guess);
+            System.out.print(player.getFirstName() + ", enter a letter: ");
+            String letter = scanner.nextLine();
 
-            // Decide whether the player wins money or a physical prize
-            if (new Random().nextBoolean()) {
-                // Player wins money
-                Money moneyAward = new Money();
-                long winnings = moneyAward.displayWinnings(player, isCorrectGuess);
-                player.setMoney(player.getMoney() + winnings);
-                numbers.generateNumber();
-            } else {
-                // Player wins a physical prize
-                Physical physicalAward = new Physical();
-                physicalAward.displayWinnings(player, isCorrectGuess);
-                numbers.generateNumber();
+            try {
+                Phrases.findLetters(letter);
+            } catch (MultipleLettersException e) {
+                System.out.println(e.getMessage());
+            } catch (Exception e) {
+                System.out.println("Invalid input. Please enter a letter.");
             }
 
             System.out.println(player);
-            keepPlaying = false; // For this example, we stop after one turn, you can change this
+            keepPlaying = false;
         }
     }
 }

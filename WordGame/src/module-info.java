@@ -6,4 +6,7 @@
  *
  */
 module WordGame {
+	    requires java.desktop;
+	
+	
 }

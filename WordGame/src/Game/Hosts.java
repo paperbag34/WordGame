@@ -1,14 +1,17 @@
 package Game;
 
+import java.util.Scanner;
+
 public class Hosts extends Person {
-	
-	//There was an error if there were no constructors
-	  public Hosts(String firstName) {
-	        super(firstName);
-	    }
-	  
-	public void randomizeNum() {
-        Numbers numbers = new Numbers();
-        numbers.generateNumber();
+    private String hostName;
+
+    public Hosts(String firstName) {
+        super(firstName);
+        this.hostName = firstName;
+    }
+
+    public void enterPhrase(String phrase) {
+        // Set the game phrase based on the provided input
+        Phrases.setGamePhrase(phrase);
     }
 }
