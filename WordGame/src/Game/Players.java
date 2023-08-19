@@ -38,7 +38,7 @@ public class Players extends Person {
     }
 
     public void resetTurn() {
-        // Reset any turn-specific state for the player
+        // Reset any turn for the player
         this.hasTakenTurn = false;
     }
 }
