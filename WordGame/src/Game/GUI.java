@@ -4,23 +4,32 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GUI {
-    private JFrame frame;
+	private JFrame frame;
     private JPanel panel;
     private JTextArea gameOutput;
     private JTextField phraseInput;
     private JTextField playerNameInput;
-    private JButton startButton;
     private JButton guessButton;
     private Hosts host;
     private List<Players> players;
     private int currentPlayerIndex;
+    private JMenuBar menuBar;
+    private JMenu gameMenu;
+    private JMenu aboutMenu;
+    private JCheckBoxMenuItem saveMessagesCheckbox;
+    private JTextArea messageArea;
 
     public GUI() {
-        frame = new JFrame("Word Guessing Game");
+    	
+    	// Initialize the players list
+        players = new ArrayList<>();
+        
+    	frame = new JFrame("Word Guessing Game");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 600);
 
@@ -32,15 +41,7 @@ public class GUI {
 
         phraseInput = new JTextField(30);
         playerNameInput = new JTextField(20);
-        startButton = new JButton("Start Game");
         guessButton = new JButton("Guess");
-
-        startButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                startGame();
-            }
-        });
 
         guessButton.addActionListener(new ActionListener() {
             @Override
@@ -50,22 +51,188 @@ public class GUI {
         });
 
         JPanel inputPanel = new JPanel();
+        JButton startGameButton = new JButton("Start Game");
+        JButton guessButton = new JButton("Guess");
         inputPanel.setLayout(new FlowLayout());
         inputPanel.add(new JLabel("Enter a phrase for the players to guess:"));
         inputPanel.add(phraseInput);
         inputPanel.add(new JLabel("Enter player names (comma-separated):"));
         inputPanel.add(playerNameInput);
+        inputPanel.add(startGameButton);
+        
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout());
+        buttonPanel.add(guessButton);
+
+
 
         panel.add(gameOutput, BorderLayout.CENTER);
         panel.add(inputPanel, BorderLayout.NORTH);
-        panel.add(startButton, BorderLayout.WEST);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
         panel.add(guessButton, BorderLayout.EAST);
+        
+        
 
+        // Create menu bar
+        menuBar = new JMenuBar();
+        frame.setJMenuBar(menuBar);
+        
+        // Create game menu and set mnemonic
+        gameMenu = new JMenu("Game");
+        gameMenu.setMnemonic(KeyEvent.VK_G);
+        menuBar.add(gameMenu);
+
+        // Create about menu and set mnemonic
+        aboutMenu = new JMenu("About");
+        aboutMenu.setMnemonic(KeyEvent.VK_A);
+        menuBar.add(aboutMenu);
+
+        // Create menu items under the game menu
+        JMenuItem addPlayerMenuItem = new JMenuItem("Add Player");
+        JMenuItem addHostMenuItem = new JMenuItem("Add Host");
+        gameMenu.add(addPlayerMenuItem);
+        gameMenu.add(addHostMenuItem);
+
+        // Create menu item under the about menu
+        JMenuItem layoutMenuItem = new JMenuItem("Layout");
+        aboutMenu.add(layoutMenuItem);
+
+        // Create message area with scroll pane
+        messageArea = new JTextArea(10, 50);
+        messageArea.setEditable(false);
+        JScrollPane messageScrollPane = new JScrollPane(messageArea);
+        panel.add(messageScrollPane, BorderLayout.SOUTH);
+
+        // Create save messages checkbox
+        saveMessagesCheckbox = new JCheckBoxMenuItem("Save Messages");
+        gameMenu.addSeparator();
+        gameMenu.add(saveMessagesCheckbox);
+
+        
+        
+        
+        
+        //Action listener for addplayer
+        addPlayerMenuItem.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+        		addPlayer();
+        	}
+        });
+        // ActionListener for "Add Host" menu item
+        addHostMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                addHost();
+            }
+        });
+     // ActionListener for "Start Game" button
+        startGameButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                startGame();
+            }
+        });
+        
+        guessButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                takeTurn();
+            }
+        });
+        
+        
+        
+        
         // Disable the "Guess" button initially
-        guessButton.setEnabled(false);
+        //guessButton.setEnabled(false);
 
         frame.add(panel);
         frame.setVisible(true);
+    }
+
+    private boolean allPlayersHaveTakenTurns() {
+        for (Players player : players) {
+            if (!player.hasTakenTurn()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void takeTurn() {
+        Players currentPlayer = players.get(currentPlayerIndex);
+
+        // Check if the current player has already taken their turn in this round
+        if (currentPlayer.hasTakenTurn()) {
+            // Move to the next player's turn
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+            // If all players have taken their turns in this round, start a new round
+//            if (currentPlayerIndex == 0 && allPlayersHaveTakenTurns()) {
+//                startNewRound();
+//            } else {
+//                updateGameOutput("It's " + players.get(currentPlayerIndex).getFirstName() + "'s turn.");
+//            }
+            return;
+        }
+
+        // Get letter input
+        String letter = JOptionPane.showInputDialog("Host says: " + Phrases.getPlayingPhrase() + "\n" +
+                currentPlayer.getFirstName() + ", enter a letter: ");
+
+        if (letter != null && letter.length() == 1) {
+            try {
+                // Update the code to process the letter and check for a win
+                Phrases.findLetters(letter); // Assuming this method updates the game state
+                updateGameOutput(currentPlayer.toString());
+
+                if (Phrases.winCondition) {
+                    // Update the code for winning logic and starting new rounds
+                    currentPlayer.setMoney(currentPlayer.getMoney() + 500);
+                    updateGameOutput(currentPlayer.getFirstName() + " Won 500 dollars. Their Total is $" + currentPlayer.getMoney());
+
+                    if (allPlayersHaveTakenTurns()) {
+                        startNewRound();
+                    } else {
+                        currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+                        updateGameOutput("It's " + players.get(currentPlayerIndex).getFirstName() + "'s turn.");
+                    }
+                } else {
+                    currentPlayer.setHasTakenTurn(true);
+                    currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+                    updateGameOutput("It's " + players.get(currentPlayerIndex).getFirstName() + "'s turn.");
+                }
+            } catch (MultipleLettersException e) {
+                updateGameOutput(e.getMessage());
+            } catch (Exception e) {
+                updateGameOutput("Invalid input. Please enter a letter.");
+            }
+        } else {
+            updateGameOutput("Invalid input. Please enter a single letter.");
+        }
+    }
+
+
+
+    private void addHost() {
+        String hostName = JOptionPane.showInputDialog("Enter the host's name:");
+        if (hostName != null && !hostName.trim().isEmpty()) {
+            host = new Hosts(hostName);
+            updateGameOutput("Host " + hostName + " added.");
+        } else {
+            updateGameOutput("Invalid host name.");
+        }
+    }
+    
+    private void addPlayer() {
+        String playerName = JOptionPane.showInputDialog("Enter the player's name:");
+        if (playerName != null && !playerName.trim().isEmpty()) {
+            players.add(new Players(playerName));
+            updateGameOutput("Player " + playerName + " added.");
+        } else {
+            updateGameOutput("Invalid player name.");
+        }
     }
 
     private void startGame() {
@@ -87,78 +254,18 @@ public class GUI {
         currentPlayerIndex = 0;
         guessButton.setEnabled(true);
         updateGameOutput("Game started. It's " + players.get(currentPlayerIndex).getFirstName() + "'s turn.");
+        
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                // Update UI components here
+                updateGameOutput("UI updated"); // For debugging purposes
+                panel.revalidate();
+                panel.repaint();
+            }
+        });
     }
+
     
-    private boolean allPlayersHaveTakenTurns() {
-        for (Players player : players) {
-            if (!player.hasTakenTurn()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private void takeTurn() {
-        Players currentPlayer = players.get(currentPlayerIndex);
-
-        // Check if the current player has already taken their turn in this round
-        if (currentPlayer.hasTakenTurn()) {
-            // Move to the next player's turn
-            currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
-            // If all players have taken their turns in this round, start a new round
-            if (currentPlayerIndex == 0 && allPlayersHaveTakenTurns()) {
-                startNewRound();
-            } else {
-                updateGameOutput("It's " + players.get(currentPlayerIndex).getFirstName() + "'s turn.");
-            }
-            return;
-        }
-
-        // Get letter input
-        String letter = JOptionPane.showInputDialog("Host says: " + Phrases.getPlayingPhrase() + "\n" +
-                currentPlayer.getFirstName() + ", enter a letter: ");
-
-        if (letter != null && letter.length() == 1) {
-            try {
-                Phrases.findLetters(letter);
-            } catch (MultipleLettersException e) {
-                updateGameOutput(e.getMessage());
-            } catch (Exception e) {
-                updateGameOutput("Invalid input. Please enter a letter.");
-            }
-
-            // Display player info
-            updateGameOutput(currentPlayer.toString());
-
-            // Check for win condition
-            if (Phrases.winCondition) {
-                currentPlayer.setMoney(currentPlayer.getMoney() + 500);
-                updateGameOutput(currentPlayer.getFirstName() + " Won 500 dollars. Their Total is $" + currentPlayer.getMoney());
-                
-                // Check if all players have taken their turns in this round
-                if (allPlayersHaveTakenTurns()) {
-                    // Start a new round
-                    startNewRound();
-                } else {
-                    // Move to the next player's turn
-                    currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
-                    updateGameOutput("It's " + players.get(currentPlayerIndex).getFirstName() + "'s turn.");
-                }
-            } else {
-                // Mark the current player as having taken their turn
-                currentPlayer.setHasTakenTurn(true);
-
-                // Move to the next player's turn
-                currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
-                updateGameOutput("It's " + players.get(currentPlayerIndex).getFirstName() + "'s turn.");
-            }
-        } else {
-            updateGameOutput("Invalid input. Please enter a single letter.");
-        }
-    }
-
-
-
     private void startNewRound() {
         // Start a new round with a new phrase
         updateGameOutput("All players have taken their turns. Starting a new round.");
@@ -171,6 +278,7 @@ public class GUI {
         Phrases.winCondition = false; // Reset the win condition
         updateGameOutput("It's " + players.get(currentPlayerIndex).getFirstName() + "'s turn.");
     }
+
 
     private void updateGameOutput(String message) {
         gameOutput.append(message + "\n");
