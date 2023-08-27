@@ -1,5 +1,8 @@
 package Game;
 
+
+import javax.sound.sampled.*;
+import java.io.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -7,6 +10,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class GUI {
 	private JFrame frame;
@@ -23,7 +28,8 @@ public class GUI {
     private JMenu aboutMenu;
     private JCheckBoxMenuItem saveMessagesCheckbox;
     private JTextArea messageArea;
-
+    private JProgressBar loadingBar;
+    
     public GUI() {
     	
     	// Initialize the players list
@@ -31,7 +37,7 @@ public class GUI {
         
     	frame = new JFrame("Word Guessing Game");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1200, 1000);
+        frame.setSize(1400, 1000);
 
         panel = new JPanel();
         panel.setLayout(new BorderLayout());
@@ -42,11 +48,16 @@ public class GUI {
         phraseInput = new JTextField(30);
         playerNameInput = new JTextField(20);
         guessButton = new JButton("Guess");
+        
+        // Initialize the loading bar
+        loadingBar = new JProgressBar(0, 100); // Set the min and max values for the loading progress
+        loadingBar.setStringPainted(true); // Display percentage text on the loading bar
 
         guessButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 takeTurn();
+                
             }
         });
 
@@ -59,13 +70,14 @@ public class GUI {
         inputPanel.add(new JLabel("Enter player names (comma-separated):"));
         inputPanel.add(playerNameInput);
         inputPanel.add(startGameButton);
+        inputPanel.add(loadingBar);
         
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout());
         buttonPanel.add(guessButton);
 
-
+        
 
         panel.add(gameOutput, BorderLayout.CENTER);
         panel.add(inputPanel, BorderLayout.NORTH);
@@ -108,9 +120,8 @@ public class GUI {
         saveMessagesCheckbox = new JCheckBoxMenuItem("Save Messages");
         gameMenu.addSeparator();
         gameMenu.add(saveMessagesCheckbox);
-
-        
-        
+    
+     
         
         
         //Action listener for addplayer
@@ -142,14 +153,12 @@ public class GUI {
             }
         });
         
-        
-        
-        
-        // Disable the "Guess" button initially
-        //guessButton.setEnabled(false);
+       
 
         frame.add(panel);
         frame.setVisible(true);
+        //playMusic();
+        playMusicInBackground();
     }
 
     private boolean allPlayersHaveTakenTurns() {
@@ -191,6 +200,8 @@ public class GUI {
                     // Update the code for winning logic and starting new rounds
                     currentPlayer.setMoney(currentPlayer.getMoney() + 500);
                     updateGameOutput(currentPlayer.getFirstName() + " Won 500 dollars. Their Total is $" + currentPlayer.getMoney());
+                    showImageDialog();
+                    startNewRound();
 
                     if (allPlayersHaveTakenTurns()) {
                         startNewRound();
@@ -213,7 +224,50 @@ public class GUI {
         }
     }
 
+    private void playMusic() {
+        try {
+            File audioFile = new File("C:\\Users\\Xavier\\Downloads\\(FREE) Joji x Rich Brian Type Beat 2286 (prod by Null)  Sad Lofi Type Beat 2020.wav");
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+            
+            Clip clip = AudioSystem.getClip();
+            clip.open(audioStream);
+            
+            clip.start();  // Start playing the audio
+            
+            // Keep the program running while the music plays
+            Thread.sleep(clip.getMicrosecondLength() / 1000);
+            
+            clip.stop();   // Stop the audio after it's done
+            clip.close();  // Close the clip
+        } catch (UnsupportedAudioFileException | LineUnavailableException | IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private void playMusicInBackground() {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            try {
+                File audioFile = new File("C:\\Users\\Xavier\\Downloads\\(FREE) Joji x Rich Brian Type Beat 2286 (prod by Null)  Sad Lofi Type Beat 2020.wav");
+                AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
 
+                Clip clip = AudioSystem.getClip();
+                clip.open(audioStream);
+
+                // Start playing the audio
+                clip.start();  
+
+                // Keep the thread running while the music plays
+                Thread.sleep(clip.getMicrosecondLength() / 1000);
+
+                clip.stop();   // Stop the audio after it's done
+                clip.close();  // Close the clip
+            } catch (UnsupportedAudioFileException | LineUnavailableException | IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+        executorService.shutdown();
+    }
 
     private void addHost() {
         String hostName = JOptionPane.showInputDialog("Enter the host's name:");
@@ -235,9 +289,14 @@ public class GUI {
         }
     }
 
+    private void updateLoadingProgress(int progress) {
+        loadingBar.setValue(progress);
+    }
+    
     private void startGame() {
         // Get the phrase from the user
         String phrase = phraseInput.getText();
+        phraseInput.setText(""); // Clear the input box
 
         // Set the game phrase using the enterPhrase method in the Hosts class
         host = new Hosts("Game Host");
@@ -250,11 +309,35 @@ public class GUI {
             players.add(new Players(playerName));
         }
 
-        // Initialize the game
-        currentPlayerIndex = 0;
-        guessButton.setEnabled(true);
-        updateGameOutput("Game started. It's " + players.get(currentPlayerIndex).getFirstName() + "'s turn.");
-        
+        SwingWorker<Void, Integer> worker = new SwingWorker<Void, Integer>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                int totalSteps = 100;
+                for (int step = 0; step <= totalSteps; step++) {
+                    publish(step); // Publish the progress
+                    Thread.sleep(50); // Simulate loading time
+                }
+                return null;
+            }
+
+            @Override
+            protected void process(List<Integer> chunks) {
+                int progress = chunks.get(chunks.size() - 1);
+                updateLoadingProgress(progress);
+                frame.repaint();
+            }
+
+            @Override
+            protected void done() {
+                // Initialize the game
+                currentPlayerIndex = 0;
+                guessButton.setEnabled(true);
+                updateGameOutput("Game started. It's " + players.get(currentPlayerIndex).getFirstName() + "'s turn.");
+            }
+        };
+
+        worker.execute(); // Start the SwingWorker
+
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 // Update UI components here
@@ -264,20 +347,60 @@ public class GUI {
             }
         });
     }
+    
+    
+    private boolean askForPlayAgain() {
+        int choice = JOptionPane.showConfirmDialog(frame, "Do you want to play again?", "Play Again", JOptionPane.YES_NO_OPTION);
+        return choice == JOptionPane.YES_OPTION;
+    }
 
+    //C:\\Users\\Xavier\\Desktop\\500dollars.jpg
+    
+    private void showImageDialog() {
+        JDialog dialog = new JDialog(frame, "Congratulations!", true);
+        dialog.setLayout(new BorderLayout());
+
+        ImageIcon imageIcon = new ImageIcon("C:\\Users\\Xavier\\Desktop\\500dollars.jpg"); // Replace with the actual path to your image file
+        JLabel label = new JLabel(imageIcon);
+        dialog.add(label, BorderLayout.CENTER);
+
+        JButton closeButton = new JButton("Close");
+        closeButton.addActionListener(e -> dialog.dispose());
+        dialog.add(closeButton, BorderLayout.SOUTH);
+
+        dialog.pack();
+        dialog.setLocationRelativeTo(frame);
+        dialog.setVisible(true);
+    }
     
     private void startNewRound() {
-        // Start a new round with a new phrase
-        updateGameOutput("All players have taken their turns. Starting a new round.");
-        String newPhrase = JOptionPane.showInputDialog("Enter a new phrase for the players to guess:");
-        host.enterPhrase(newPhrase);
-        for (Players player : players) {
-            player.resetTurn(); // Reset the turn state for each player
+        
+    	 updateGameOutput("All players have taken their turns. Starting a new round.");
+         String newPhrase = JOptionPane.showInputDialog("Enter a new phrase for the players to guess:");
+         host.enterPhrase(newPhrase);
+         for (Players player : players) {
+             player.resetTurn(); // Reset the turn state for each player
+         }
+         currentPlayerIndex = 0; // Reset the current player index
+         Phrases.winCondition = false; // Reset the win condition
+         updateGameOutput("It's " + players.get(currentPlayerIndex).getFirstName() + "'s turn.");
+         
+    	
+        boolean playAgain = askForPlayAgain();
+        if (playAgain) {
+            // Start a new game
+            resetGame();
+            startGame();
+        } else {
+            // Exit the application
+            System.exit(0);
         }
-        currentPlayerIndex = 0; // Reset the current player index
-        Phrases.winCondition = false; // Reset the win condition
-        updateGameOutput("It's " + players.get(currentPlayerIndex).getFirstName() + "'s turn.");
     }
+    
+    private void resetGame() {
+    	currentPlayerIndex = 0;
+	}
+	
 
 
     private void updateGameOutput(String message) {
